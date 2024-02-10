@@ -30,4 +30,5 @@ module.exports = {
     "indent": ["error", 2],
     "max-len": ["error", {"code": 120}],
   },
+  project: "./tsconfig.json",
 };
