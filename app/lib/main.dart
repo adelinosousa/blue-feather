@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'package:bluefeather/client/firebase_client.dart';
+import 'package:bluefeather/log/logger.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-void main() {
+Future<void> main() async {
+  await FirebaseClient.initialize();
   runApp(const MyApp());
 }
 
@@ -11,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Blue Feather',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -56,6 +62,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  String _response = '';
+  final TextEditingController _controller = TextEditingController();
 
   void _incrementCounter() {
     setState(() {
@@ -65,6 +73,80 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+    });
+  }
+
+  Future<void> _registerDevice() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+
+    if (token == null) {
+      Logger.log('Token is null');
+      setState(() {
+        _response = 'Token is null';
+      });
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse(
+          'http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/register'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'deviceToken': token,
+      }),
+    );
+
+    Logger.log('Token: $token');
+
+    setState(() {
+      _response = response.body;
+    });
+  }
+
+  Future<void> _unregisterDevice() async {
+    final response = await http.post(
+      Uri.parse(
+          'http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/unregister'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'deviceToken': '1234567890',
+      }),
+    );
+    setState(() {
+      _response = response.body;
+    });
+  }
+
+  Future<void> _sendNotification() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+
+    if (token == null) {
+      Logger.log('Token is null');
+      setState(() {
+        _response = 'Token is null';
+      });
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/notify'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'title': 'Test Notification',
+        'body': 'This is a test notification',
+        'tokens': [token],
+      }),
+    );
+    setState(() {
+      _response = response.body;
     });
   }
 
@@ -112,6 +194,27 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            TextField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Enter device token',
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _registerDevice,
+              child: const Text('Register Device'),
+            ),
+            ElevatedButton(
+              onPressed: _unregisterDevice,
+              child: const Text('Unregister Device'),
+            ),
+            ElevatedButton(
+              onPressed: _sendNotification,
+              child: const Text('Send Notification'),
+            ),
+            const SizedBox(height: 20),
+            Text(_response),
           ],
         ),
       ),

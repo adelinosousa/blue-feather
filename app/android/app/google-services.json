@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "911286425111",
+    "project_id": "blue-feather-e2afc",
+    "storage_bucket": "blue-feather-e2afc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:911286425111:android:54a3f5ea21f83801f66e52",
+        "android_client_info": {
+          "package_name": "com.example.bluefeather"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBNRCMBHn2lYI7Q2DdZKe7zfv3n-8kJ-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
