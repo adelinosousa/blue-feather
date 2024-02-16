@@ -107,6 +107,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _unregisterDevice() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+
+    if (token == null) {
+      Logger.log('Token is null');
+      setState(() {
+        _response = 'Token is null';
+      });
+      return;
+    }
+
     final response = await http.post(
       Uri.parse(
           'http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/unregister'),
@@ -114,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'Content-Type': 'application/json',
       },
       body: jsonEncode(<String, String>{
-        'deviceToken': '1234567890',
+        'deviceToken': token,
       }),
     );
     setState(() {
@@ -143,6 +154,104 @@ class _MyHomePageState extends State<MyHomePage> {
         'title': 'Test Notification',
         'body': 'This is a test notification',
         'tokens': [token],
+      }),
+    );
+    setState(() {
+      _response = response.body;
+    });
+  }
+
+  Future<void> _subscribeToTopic() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+    if (token == null) {
+      Logger.log('Token is null');
+      setState(() {
+        _response = 'Token is null';
+      });
+      return;
+    }
+
+    String topic = _controller.text;
+    if (topic.isEmpty) {
+      Logger.log('Topic is empty');
+      setState(() {
+        _response = 'Topic is empty';
+      });
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse(
+          'http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/subscribe'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'topic': topic,
+        'deviceToken': token,
+      }),
+    );
+    setState(() {
+      _response = response.body;
+    });
+  }
+
+  Future<void> _unsubscribeFromTopic() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    String? token = await messaging.getToken();
+    if (token == null) {
+      Logger.log('Token is null');
+      setState(() {
+        _response = 'Token is null';
+      });
+      return;
+    }
+
+    String topic = _controller.text;
+    if (topic.isEmpty) {
+      Logger.log('Topic is empty');
+      setState(() {
+        _response = 'Topic is empty';
+      });
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse(
+          'http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/unsubscribe'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'topic': topic,
+        'deviceToken': token,
+      }),
+    );
+    setState(() {
+      _response = response.body;
+    });
+  }
+
+  Future<void> _sendNotificationToTopic() async {
+    String topic = _controller.text;
+    if (topic.isEmpty) {
+      Logger.log('Topic is empty');
+      setState(() {
+        _response = 'Topic is empty';
+      });
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:5001/blue-feather-e2afc/europe-west1/send'),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'title': 'Test Notification',
+        'body': 'This is a test notification',
+        'topic': topic,
       }),
     );
     setState(() {
@@ -198,7 +307,7 @@ class _MyHomePageState extends State<MyHomePage> {
               controller: _controller,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: 'Enter device token',
+                hintText: 'Enter topic to subscribe to',
               ),
             ),
             ElevatedButton(
@@ -212,6 +321,18 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               onPressed: _sendNotification,
               child: const Text('Send Notification'),
+            ),
+            ElevatedButton(
+              onPressed: _subscribeToTopic,
+              child: const Text('Subscribe to Topic'),
+            ),
+            ElevatedButton(
+              onPressed: _unsubscribeFromTopic,
+              child: const Text('Unsubscribe from Topic'),
+            ),
+            ElevatedButton(
+              onPressed: _sendNotificationToTopic,
+              child: const Text('Send Notification to Topic'),
             ),
             const SizedBox(height: 20),
             Text(_response),

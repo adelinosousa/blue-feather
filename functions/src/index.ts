@@ -101,12 +101,14 @@ exports.notify = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (request, 
   const { title, body, tokens } = request.body; // Tokens is an array of strings
   try {
     // Check if the device tokens are registered
-    let registeredTokens: string[] = [];
-
     const snapshot = await firestore(process.env.BF_SERVICE_ACCOUNT!).collection('devices').where('token', 'in', tokens).get();
-    if (snapshot.size !== tokens.length) {
-      registeredTokens = snapshot.docs.map<string>(doc => doc.data().token);
+    if (snapshot.empty) {
+      response.status(404).send({ error: 'No registered devices found' });
+      return;
     }
+
+    console.log(`Found ${snapshot.size} registered devices`);
+    const registeredTokens = snapshot.docs.map<string>(doc => doc.data().token);
 
     // Send the notification to the registered devices
     const message = {
@@ -136,6 +138,14 @@ exports.subscribe = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (reques
     const snapshot = await firestore(process.env.BF_SERVICE_ACCOUNT!).collection('devices').where('token', '==', deviceToken).limit(1).get();
     if (snapshot.empty) {
       response.status(404).send({ error: 'Device not found' });
+      return;
+    }
+
+    // Check if the device is already subscribed to the topic
+    const topicsCollection = firestore(process.env.BF_SERVICE_ACCOUNT!).collection('topics');
+    const topicsSnapshot = await topicsCollection.where('token', '==', deviceToken).where('topic', '==', topic).get();
+    if (!topicsSnapshot.empty) {
+      response.status(200).send({ message: `Device already subscribed to topic ${topic}` });
       return;
     }
 
@@ -197,10 +207,10 @@ exports.send = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (request, re
 
     const message = {
       notification: { title, body },
-      topic: topic,
+      topic
     }
 
-    await messaging(process.env.BF_SERVICE_ACCOUNT!).sendToTopic(topic, message);
+    await messaging(process.env.BF_SERVICE_ACCOUNT!).send(message);
 
     response.status(200).send({ message: `Message sent to topic ${topic} successfully` });
   } catch (error) {
