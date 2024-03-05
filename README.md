@@ -1,4 +1,6 @@
-# Blue Feather
+<div align="center"><img src="https://github.com/adelinosousa/blue-feather/blob/main/common/images/BlueFeatherIcon.png?raw=true" alt="Blue Feather"/></div>
+
+# Blue Feather 
 
 This project is an example implementation of a web API for managing device registrations using Firebase Cloud Messaging (FCM). It supports registering and unregistering devices, as well as subscribing and unsubscribing them from topics for targeted notifications.
 
