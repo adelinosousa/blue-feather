@@ -5,7 +5,7 @@ let initializeApp = (serviceAccount: string) => {
   admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(serviceAccount)),
   });
-}
+};
 
 export function firestore(serviceAccount: string) {
   try {

@@ -19,6 +19,7 @@ module.exports = {
   },
   ignorePatterns: [
     "/lib/**/*", // Ignore built files.
+    "/generated/**/*", // Ignore generated files.
   ],
   plugins: [
     "@typescript-eslint",
@@ -28,7 +29,10 @@ module.exports = {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
     "indent": ["error", 2],
-    "max-len": ["error", {"code": 120}],
+    "max-len": ["error", { "code": 120 }],
+    "object-curly-spacing": ["error", "always"],
+    "linebreak-style": 0,
+    "require-jsdoc": 0,
+    "no-empty": false,
   },
-  project: "./tsconfig.json",
 };
