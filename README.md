@@ -62,7 +62,7 @@ firebase functions:secrets:set BF_SERVICE_ACCOUNT
 The API supports the following endpoints:
 
     POST /register: Register a device token.
-        Body: { "deviceToken": "<device_token>" }
+        Body: { "deviceToken": "<device_token>", "data": "<device_data>" }
 
     POST /unregister: Unregister a device token.
         Body: { "deviceToken": "<device_token>" }
@@ -89,6 +89,21 @@ curl -X POST http://localhost:5001/blue-feather-e2afc/europe-west1/register \
 -d '{"deviceToken": "your_device_token_here"}'
 ```
 
+Register a device (with data):
+
+```bash
+curl -X POST http://localhost:5001/blue-feather-e2afc/europe-west1/register \
+-H "Content-Type: application/json" \
+-d '{"deviceToken": "your_device_token_here", "data": {"userId": "12345"}}'
+```
+
+Notify a device (with data):
+```bash
+curl -X POST http://localhost:5001/blue-feather-e2afc/europe-west1/notify \
+-H "Content-Type: application/json" \
+-d '{"title": "notification title", "body": "notification body", "key": "userId", "value": "12345"}'
+```
+
 Subscribe a device to a topic:
 
 ```bash
@@ -109,7 +124,7 @@ $ npm run deploy
 
 ## Security
 
-This example does not include authentication or encryption out of the box. It's recommended to implement API key checks, HTTPS, and other security measures suitable for your deployment environment.
+This example includes a basic API key authentication out of the box (middleware.ts). It's recommended to implement API key checks, HTTPS, and other security measures suitable for your deployment environment.
 
 ## Contributing
 

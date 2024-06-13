@@ -33,7 +33,8 @@ exports.health = onRequest({ secrets: ["SUPER_SECRET"] }, (request, response) =>
 // Register a device
 exports.register = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (request, response) => {
   middleware(request, response, async () => {
-    const { deviceToken } = request.body;
+    const { deviceToken, data } = request.body;
+
     // Check if the device token is provided
     if (!deviceToken) {
       response.status(400).send({ error: "Device token is required" });
@@ -50,8 +51,20 @@ exports.register = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (request
         return;
       }
 
+      // Prepare the registration data
+      let newRegistration = { token: deviceToken };
+      if (data) {
+        // Prefix the data keys with "data.". This is to avoid conflicts and data exploitation
+        const prefixedData = Object.keys(data).reduce((acc, key) => {
+          acc["data." + key] = data[key];
+          return acc;
+        }, {} as any);
+
+        newRegistration = { ...newRegistration, ...prefixedData };
+      }
+
       // Register the device token
-      const docRef = await devicesRef.add({ token: deviceToken });
+      const docRef = await devicesRef.add(newRegistration);
       response.status(200).send({ message: `Device registered with ID: ${docRef.id}` });
     } catch (error) {
       console.error("Error registering device: ", error);
@@ -106,15 +119,36 @@ exports.unregister = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (reque
 // Send a notification
 exports.notify = onRequest({ secrets: ["BF_SERVICE_ACCOUNT"] }, async (request, response) => {
   middleware(request, response, async () => {
-    const { title, body, tokens } = request.body; // Tokens is an array of strings
+    const { title, body, tokens, key, value } = request.body; // Tokens is an array of strings
     try {
-      // Check if the device tokens are registered
-      const snapshot = await firestore(process.env.BF_SERVICE_ACCOUNT!)
-        .collection("devices")
-        .where("token", "in", tokens)
-        .get();
-      if (snapshot.empty) {
-        response.status(404).send({ error: "No registered devices found" });
+      let snapshot;
+
+      if (tokens && tokens.length > 0) {
+        // Check if the device tokens are registered
+        snapshot = await firestore(process.env.BF_SERVICE_ACCOUNT!)
+          .collection("devices")
+          .where("token", "in", tokens)
+          .get();
+        if (snapshot.empty) {
+          response.status(404).send({ error: "No registered devices found" });
+          return;
+        }
+      }
+
+      if (key && value) {
+        // Check if the devices with the provided key-value pair are registered
+        snapshot = await firestore(process.env.BF_SERVICE_ACCOUNT!)
+          .collection("devices")
+          .where("data." + key, "==", value)
+          .get();
+          if (snapshot.empty) {
+            response.status(404).send({ error: "No registered devices found" });
+            return;
+          }
+      }
+
+      if (!snapshot) {
+        response.status(200).send({ error: "Invalid request. Provide either tokens or key/value to notify" });
         return;
       }
 
